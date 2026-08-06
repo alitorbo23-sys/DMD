@@ -3,177 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>D&D Character Creator</title>
-    <!-- اتصال به کتابخانه رسمی مینی‌اپ تلگرام -->
+    <title>D&D 5e Epic App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- آیکون‌های زنده -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* طراحی ریسپانسیو و هماهنگ با تم تاریک/روشن تلگرام */
+        @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css');
+
         :root {
-            --bg-color: var(--tg-theme-bg-color, #1a1a1a);
-            --text-color: var(--tg-theme-text-color, #ffffff);
-            --hint-color: var(--tg-theme-hint-color, #a8a8a8);
-            --button-color: var(--tg-theme-button-color, #8b0000);
-            --button-text: var(--tg-theme-button-text-color, #ffffff);
-            --input-bg: var(--tg-theme-secondary-bg-color, #2c2c2c);
+            --primary-glow: #ff3333;
+            --bg-dark: #0a0a0c;
+            --glass-bg: rgba(20, 20, 25, 0.7);
+            --glass-border: rgba(255, 51, 51, 0.3);
+            --text-main: #f0f0f0;
+            --text-muted: #a0a0a0;
         }
-        body {
-            font-family: Tahoma, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
+
+        * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
-        h2 {
-            text-align: center;
-            font-size: 1.4rem;
-            margin-bottom: 25px;
-            color: var(--button-color);
+
+        body {
+            background: radial-gradient(circle at center, #1a1a24 0%, var(--bg-dark) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 70px; /* فضای منوی پایین */
         }
-        .form-group {
-            margin-bottom: 15px;
+
+        /* افکت‌های پس‌زمینه متحرک */
+        .bg-particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 51, 51, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(100, 100, 255, 0.05) 0%, transparent 50%);
+            animation: pulseBg 10s infinite alternate;
         }
-        label {
+
+        @keyframes pulseBg {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* ساختار تب‌ها */
+        .page-section {
+            display: none;
+            padding: 20px;
+            animation: fadeInTop 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .page-section.active {
             display: block;
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-            color: var(--hint-color);
-            font-weight: bold;
         }
+
+        @keyframes fadeInTop {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* المان‌های شیشه‌ای (Glassmorphism) */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(255, 51, 51, 0.2);
+            border-color: rgba(255, 51, 51, 0.6);
+        }
+
+        /* هدرها و متون */
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--primary-glow);
+            color: #fff;
+        }
+
+        .icon-float {
+            font-size: 2.5rem;
+            color: var(--primary-glow);
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); text-shadow: 0 15px 15px rgba(255,0,0,0.4); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* فرم‌ها و اینپوت‌ها */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; }
+        
         input, select {
             width: 100%;
-            padding: 12px;
-            border: 1px solid var(--input-bg);
-            border-radius: 8px;
-            background-color: var(--input-bg);
-            color: var(--text-color);
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
             font-size: 1rem;
-            box-sizing: border-box;
+            transition: all 0.3s ease;
             outline: none;
         }
+
         input:focus, select:focus {
-            border-color: var(--button-color);
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);
+            background: rgba(0, 0, 0, 0.6);
         }
-        /* گرید برای نمایش مرتب تاس‌ها در موبایل */
+
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
         }
-        .btn {
-            background-color: var(--button-color);
-            color: var(--button-text);
+
+        /* دکمه اکشن خفن */
+        .btn-epic {
+            background: linear-gradient(45deg, #8b0000, #ff3333);
+            color: white;
             border: none;
             padding: 16px;
-            font-size: 1.1rem;
-            border-radius: 8px;
-            cursor: pointer;
             width: 100%;
-            margin-top: 25px;
+            border-radius: 12px;
+            font-size: 1.2rem;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.4);
+        }
+
+        .btn-epic::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: rgba(255,255,255,0.2);
+            transform: rotate(45deg);
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .btn-epic:active { transform: scale(0.95); }
+
+        /* منوی ناوبری پایین (Navbar) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: rgba(10, 10, 12, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .nav-item i {
+            display: block;
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: var(--primary-glow);
+            text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+        }
+
+        .nav-item.active i {
+            transform: translateY(-3px) scale(1.1);
         }
     </style>
 </head>
 <body>
-    <h2 id="welcomeText">ساخت کاراکتر جدید</h2>
-    
-    <div class="form-group">
-        <label>نام کاراکتر:</label>
-        <input type="text" id="charName" placeholder="مثلاً: آراگورن">
-    </div>
+    <div class="bg-particles"></div>
 
-    <div class="form-group">
-        <label>کلاس (Class):</label>
-        <select id="charClass">
-            <option value="Fighter">مبارز (Fighter)</option>
-            <option value="Wizard">جادوگر (Wizard)</option>
-            <option value="Rogue">دزد (Rogue)</option>
-            <option value="Cleric">روحانی (Cleric)</option>
-            <option value="Ranger">رنجر (Ranger)</option>
-        </select>
-    </div>
+    <!-- تب ۱: خانه / معرفی -->
+    <main id="tab-home" class="page-section active">
+        <div class="glass-card" style="text-align: center; margin-top: 40px;">
+            <i class="fa-solid fa-dragon icon-float"></i>
+            <h1>هوش مصنوعی D&D</h1>
+            <p style="color: var(--text-muted); line-height: 1.8;">
+                به تاریک‌ترین و جذاب‌ترین میز بازی Dungeons & Dragons خوش آمدی. اینجا هوش مصنوعی (DeepSeek) نقش راوی (DM) تو را بازی می‌کند.
+            </p>
+        </div>
+        <div class="glass-card">
+            <h3 style="color: #ff3333; margin-bottom: 10px;"><i class="fa-solid fa-bolt"></i> ویژگی‌های بات</h3>
+            <ul style="color: var(--text-muted); list-style: none; line-height: 2;">
+                <li><i class="fa-solid fa-check" style="color: green;"></i> مدیریت کامل و خودکار HP و تاس‌ها</li>
+                <li><i class="fa-solid fa-check" style="color: green;"></i> روایت داستانی زنده و چندنفره</li>
+                <li><i class="fa-solid fa-check" style="color: green;"></i> اعمال دقیق قوانین نسخه 5e</li>
+            </ul>
+        </div>
+    </main>
 
-    <div class="form-group">
-        <label>نژاد (Race):</label>
-        <select id="charRace">
-            <option value="Human">انسان (Human)</option>
-            <option value="Elf">الف (Elf)</option>
-            <option value="Dwarf">دورف (Dwarf)</option>
-            <option value="Halfling">هالفلینگ (Halfling)</option>
-        </select>
-    </div>
+    <!-- تب ۲: قوانین بازی -->
+    <main id="tab-rules" class="page-section">
+        <h2><i class="fa-solid fa-book-skull"></i> قوانین پایه 5e</h2>
+        <div class="glass-card">
+            <h3 style="color: #fff;"><i class="fa-solid fa-dice-d20"></i> سیستم تاس (d20)</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
+                تمام اعمال حساس بازی با ریختن یک تاس ۲۰ وجهی (d20) انجام می‌شود. نتیجه تاس با امتیازات شما (Modifiers) جمع شده و اگر از سختی کار (DC) بیشتر باشد، موفق می‌شوید.
+            </p>
+        </div>
+        <div class="glass-card">
+            <h3 style="color: #fff;"><i class="fa-solid fa-shield-halved"></i> مبارزات (Combat)</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
+                هر بازیکن در نوبت خود می‌تواند حرکت کند (Movement)، یک اکشن اصلی انجام دهد (مانند حمله یا جادو) و یک بونوس اکشن داشته باشد.
+            </p>
+        </div>
+    </main>
 
-    <label style="margin-top: 25px; display: block; border-bottom: 1px solid var(--hint-color); padding-bottom: 5px;">امتیازات (Stats):</label>
-    <div class="stats-grid">
-        <div class="form-group">
-            <label>قدرت (STR)</label>
-            <input type="number" id="str" value="15" min="8" max="20">
+    <!-- تب ۳: کلاس‌ها -->
+    <main id="tab-classes" class="page-section">
+        <h2><i class="fa-solid fa-khanda"></i> کلاس‌های بازی</h2>
+        <div class="stats-grid">
+            <div class="glass-card" style="text-align: center;">
+                <i class="fa-solid fa-gavel icon-float" style="font-size: 2rem;"></i>
+                <h4>مبارز (Fighter)</h4>
+                <p style="font-size: 0.7rem; color: gray; margin-top: 5px;">استاد سلاح‌ها و زره‌ها</p>
+            </div>
+            <div class="glass-card" style="text-align: center;">
+                <i class="fa-solid fa-wand-sparkles icon-float" style="font-size: 2rem; color: #a855f7;"></i>
+                <h4>جادوگر (Wizard)</h4>
+                <p style="font-size: 0.7rem; color: gray; margin-top: 5px;">دانشمند علوم آرکین</p>
+            </div>
+            <div class="glass-card" style="text-align: center;">
+                <i class="fa-solid fa-mask icon-float" style="font-size: 2rem; color: #10b981;"></i>
+                <h4>روگ (Rogue)</h4>
+                <p style="font-size: 0.7rem; color: gray; margin-top: 5px;">سریع، مخفی و مرگبار</p>
+            </div>
         </div>
-        <div class="form-group">
-            <label>چابکی (DEX)</label>
-            <input type="number" id="dex" value="14" min="8" max="20">
-        </div>
-        <div class="form-group">
-            <label>مقاومت (CON)</label>
-            <input type="number" id="con" value="13" min="8" max="20">
-        </div>
-        <div class="form-group">
-            <label>هوش (INT)</label>
-            <input type="number" id="int" value="12" min="8" max="20">
-        </div>
-        <div class="form-group">
-            <label>خرد (WIS)</label>
-            <input type="number" id="wis" value="10" min="8" max="20">
-        </div>
-        <div class="form-group">
-            <label>کاریزما (CHA)</label>
-            <input type="number" id="cha" value="8" min="8" max="20">
-        </div>
-    </div>
+    </main>
 
-    <button class="btn" onclick="saveCharacter()">ثبت کاراکتر و ورود</button>
+    <!-- تب ۴: داشبورد / ساخت کاراکتر -->
+    <main id="tab-dashboard" class="page-section">
+        <h2><i class="fa-solid fa-user-ninja"></i> داشبورد کاراکتر</h2>
+        <div class="glass-card">
+            <div class="form-group">
+                <label><i class="fa-solid fa-signature"></i> نام هیرو:</label>
+                <input type="text" id="charName" placeholder="نام افسانه‌ای خود را وارد کنید...">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-hat-wizard"></i> کلاس:</label>
+                <select id="charClass">
+                    <option value="Fighter">مبارز (Fighter)</option>
+                    <option value="Wizard">جادوگر (Wizard)</option>
+                    <option value="Rogue">روگ (Rogue)</option>
+                </select>
+            </div>
+            <label style="margin-top: 25px;"><i class="fa-solid fa-chart-simple"></i> تخصیص امتیازات (Stats):</label>
+            <div class="stats-grid" style="margin-top: 10px;">
+                <div class="form-group"><label>STR</label><input type="number" id="str" value="15"></div>
+                <div class="form-group"><label>DEX</label><input type="number" id="dex" value="14"></div>
+                <div class="form-group"><label>CON</label><input type="number" id="con" value="13"></div>
+                <div class="form-group"><label>INT</label><input type="number" id="int" value="12"></div>
+            </div>
+            <button class="btn-epic" onclick="startGame()"><i class="fa-solid fa-play"></i> ورود به دنیای تاریک</button>
+        </div>
+    </main>
+
+    <!-- Navigation Bar -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <i class="fa-solid fa-house"></i>
+            <span>خانه</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('rules', this)">
+            <i class="fa-solid fa-scroll"></i>
+            <span>قوانین</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('classes', this)">
+            <i class="fa-solid fa-users"></i>
+            <span>کلاس‌ها</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('dashboard', this)">
+            <i class="fa-solid fa-id-card"></i>
+            <span>داشبورد</span>
+        </div>
+    </nav>
 
     <script>
-        // راه‌اندازی و تمام‌صفحه کردن مینی‌اپ
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
-        // دریافت نام کاربر از تلگرام
-        const user = tg.initDataUnsafe?.user;
-        if(user) {
-            document.getElementById('welcomeText').innerText = 'خوش آمدی، ' + user.first_name;
+        // منطق جابجایی بین صفحات (SPA)
+        function switchTab(tabId, element) {
+            // مخفی کردن تمام سکشن‌ها
+            document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+            // خاموش کردن استایل تمام دکمه‌های منو
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            
+            // فعال کردن سکشن و دکمه جدید
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+            
+            // ایجاد ویبره ملایم هنگام کلیک (فقط در موبایل)
+            if(tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
         }
 
-        // تابع ارسال اطلاعات به سرور Node.js
-        function saveCharacter() {
-            const characterData = {
-                playerName: user ? user.first_name : "Unknown",
-                name: document.getElementById('charName').value,
-                class: document.getElementById('charClass').value,
-                race: document.getElementById('charRace').value,
-                stats: {
-                    str: parseInt(document.getElementById('str').value),
-                    dex: parseInt(document.getElementById('dex').value),
-                    con: parseInt(document.getElementById('con').value),
-                    int: parseInt(document.getElementById('int').value),
-                    wis: parseInt(document.getElementById('wis').value),
-                    cha: parseInt(document.getElementById('cha').value)
-                }
-            };
-            
-            // جلوگیری از ارسال فرم خالی
-            if(!characterData.name) {
-                tg.showAlert("لطفاً نام کاراکتر را وارد کنید!");
+        function startGame() {
+            const name = document.getElementById('charName').value;
+            if(!name) {
+                tg.showAlert("بدون نام نمی‌توانی وارد داستان شوی!");
                 return;
             }
-
-            // ارسال دیتا به ربات تلگرام (برای پردازش در سرور)
-            tg.sendData(JSON.stringify(characterData));
+            // ایجاد ویبره سنگین برای کلیک روی دکمه اصلی
+            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             
-            // بستن خودکار مینی‌اپ پس از ارسال
-            tg.close();
+            // بعدا اینجا دیتا رو به سرور ارسال میکنیم
+            tg.showAlert(`خوش آمدی ${name}. ماجراجویی به زودی آغاز می‌شود...`);
         }
     </script>
 </body>
