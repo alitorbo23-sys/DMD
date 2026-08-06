@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>D&D Character Creator</title>
+    <!-- اتصال به کتابخانه رسمی مینی‌اپ تلگرام -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* طراحی ریسپانسیو و هماهنگ با تم تاریک/روشن تلگرام */
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #1a1a1a);
+            --text-color: var(--tg-theme-text-color, #ffffff);
+            --hint-color: var(--tg-theme-hint-color, #a8a8a8);
+            --button-color: var(--tg-theme-button-color, #8b0000);
+            --button-text: var(--tg-theme-button-text-color, #ffffff);
+            --input-bg: var(--tg-theme-secondary-bg-color, #2c2c2c);
+        }
+        body {
+            font-family: Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            color: var(--button-color);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: var(--hint-color);
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-bg);
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: var(--button-color);
+        }
+        /* گرید برای نمایش مرتب تاس‌ها در موبایل */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .btn {
+            background-color: var(--button-color);
+            color: var(--button-text);
+            border: none;
+            padding: 16px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 25px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <h2 id="welcomeText">ساخت کاراکتر جدید</h2>
+    
+    <div class="form-group">
+        <label>نام کاراکتر:</label>
+        <input type="text" id="charName" placeholder="مثلاً: آراگورن">
+    </div>
+
+    <div class="form-group">
+        <label>کلاس (Class):</label>
+        <select id="charClass">
+            <option value="Fighter">مبارز (Fighter)</option>
+            <option value="Wizard">جادوگر (Wizard)</option>
+            <option value="Rogue">دزد (Rogue)</option>
+            <option value="Cleric">روحانی (Cleric)</option>
+            <option value="Ranger">رنجر (Ranger)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>نژاد (Race):</label>
+        <select id="charRace">
+            <option value="Human">انسان (Human)</option>
+            <option value="Elf">الف (Elf)</option>
+            <option value="Dwarf">دورف (Dwarf)</option>
+            <option value="Halfling">هالفلینگ (Halfling)</option>
+        </select>
+    </div>
+
+    <label style="margin-top: 25px; display: block; border-bottom: 1px solid var(--hint-color); padding-bottom: 5px;">امتیازات (Stats):</label>
+    <div class="stats-grid">
+        <div class="form-group">
+            <label>قدرت (STR)</label>
+            <input type="number" id="str" value="15" min="8" max="20">
+        </div>
+        <div class="form-group">
+            <label>چابکی (DEX)</label>
+            <input type="number" id="dex" value="14" min="8" max="20">
+        </div>
+        <div class="form-group">
+            <label>مقاومت (CON)</label>
+            <input type="number" id="con" value="13" min="8" max="20">
+        </div>
+        <div class="form-group">
+            <label>هوش (INT)</label>
+            <input type="number" id="int" value="12" min="8" max="20">
+        </div>
+        <div class="form-group">
+            <label>خرد (WIS)</label>
+            <input type="number" id="wis" value="10" min="8" max="20">
+        </div>
+        <div class="form-group">
+            <label>کاریزما (CHA)</label>
+            <input type="number" id="cha" value="8" min="8" max="20">
+        </div>
+    </div>
+
+    <button class="btn" onclick="saveCharacter()">ثبت کاراکتر و ورود</button>
+
+    <script>
+        // راه‌اندازی و تمام‌صفحه کردن مینی‌اپ
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // دریافت نام کاربر از تلگرام
+        const user = tg.initDataUnsafe?.user;
+        if(user) {
+            document.getElementById('welcomeText').innerText = 'خوش آمدی، ' + user.first_name;
+        }
+
+        // تابع ارسال اطلاعات به سرور Node.js
+        function saveCharacter() {
+            const characterData = {
+                playerName: user ? user.first_name : "Unknown",
+                name: document.getElementById('charName').value,
+                class: document.getElementById('charClass').value,
+                race: document.getElementById('charRace').value,
+                stats: {
+                    str: parseInt(document.getElementById('str').value),
+                    dex: parseInt(document.getElementById('dex').value),
+                    con: parseInt(document.getElementById('con').value),
+                    int: parseInt(document.getElementById('int').value),
+                    wis: parseInt(document.getElementById('wis').value),
+                    cha: parseInt(document.getElementById('cha').value)
+                }
+            };
+            
+            // جلوگیری از ارسال فرم خالی
+            if(!characterData.name) {
+                tg.showAlert("لطفاً نام کاراکتر را وارد کنید!");
+                return;
+            }
+
+            // ارسال دیتا به ربات تلگرام (برای پردازش در سرور)
+            tg.sendData(JSON.stringify(characterData));
+            
+            // بستن خودکار مینی‌اپ پس از ارسال
+            tg.close();
+        }
+    </script>
+</body>
+</html>
